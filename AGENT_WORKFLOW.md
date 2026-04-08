@@ -17,4 +17,4 @@ Implement Phase 1 only: create the GitHub repo name `fueleu-maritime-assignment`
 - Backend: Node.js + TypeScript, Express `/health`, ports/use-case for health, outbound PostgreSQL adapter stub, infrastructure server entry and DB connection placeholder, ESLint (typescript-eslint strict) + Prettier.  
 - Frontend: Vite + React + TypeScript + Tailwind CSS v4, sample use case and static config adapter, UI under `src/adapters/ui`, ESLint + Prettier.  
 - Root: `.gitignore`, documentation files, GitHub Actions CI for lint/build.  
-- Repository creation on github.com must be completed by the owner (e.g. `gh repo create` or the GitHub UI) before the first push.
+- Public repository **Rajneesh26D/fueleu-maritime-assignment** created with GitHub CLI; `origin` updated and initial commit pushed to `master`.

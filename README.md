@@ -4,14 +4,7 @@ Monorepo for the FuelEU Maritime assignment: a **backend** API (Node.js, TypeScr
 
 ## Repository
 
-The intended public GitHub repository name is **`fueleu-maritime-assignment`**. Initialize the remote and push after cloning or scaffolding locally, for example:
-
-```bash
-git remote add origin https://github.com/<your-org>/fueleu-maritime-assignment.git
-git push -u origin main
-```
-
-(Use `main` or `master` to match your default branch.)
+Public GitHub repository: **[github.com/Rajneesh26D/fueleu-maritime-assignment](https://github.com/Rajneesh26D/fueleu-maritime-assignment)** (`master` branch).
 
 ## Requirements
 

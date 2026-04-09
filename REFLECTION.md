@@ -28,3 +28,15 @@
 **Notes**
 
 - Route display names in the seed are placeholders where the assignment PDF was not available in the repository; codes **R001–R005** and baseline semantics match the task.
+
+## Phase 3 — Frontend dashboard and UI adapters
+
+**Goals achieved**
+
+- **HTTP adapter** (`FuelEuHttpAdapter`) in `frontend/src/adapters/infrastructure` implements `FuelEuApiPort` and targets backend routes (default `/api` with Vite dev proxy).
+- **Four tabs:** Routes (table, Set Baseline, vessel/fuel/year filters via UI metadata), Compare (intensity table, % vs baseline route, compliant vs target 89.3368, Recharts composed bar+line), Banking (CB + `GET /banking/balance`, Bank/Apply with disabled states), Pooling (member editor, sum indicator, create when feasible).
+- **Backend additions** to support the UI: **CORS**, **`GET /banking/balance`**, and **seeded per-route ships** `SHIP-R001`…`SHIP-R005` so Compare can load real intensities.
+
+**Notes**
+
+- Vessel/fuel filters on Routes use static metadata (`route-filters.meta.ts`), not DB columns, to stay within the Phase 3 frontend scope while meeting the UX requirement.

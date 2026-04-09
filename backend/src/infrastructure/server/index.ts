@@ -10,6 +10,7 @@ import { ApplyBankUseCase } from '../../core/application/apply-bank.use-case.js'
 import { BankSurplusUseCase } from '../../core/application/bank-surplus.use-case.js';
 import { ComputeComplianceBalanceUseCase } from '../../core/application/compute-compliance-balance.use-case.js';
 import { CreatePoolUseCase } from '../../core/application/create-pool.use-case.js';
+import { GetBankBalanceUseCase } from '../../core/application/get-bank-balance.use-case.js';
 import { GetHealthUseCase } from '../../core/application/get-health.use-case.js';
 import { ListRoutesUseCase } from '../../core/application/list-routes.use-case.js';
 import { SetBaselineRouteUseCase } from '../../core/application/set-baseline-route.use-case.js';
@@ -33,10 +34,12 @@ const setBaselineRoute = new SetBaselineRouteUseCase(routeRepo);
 const computeComplianceBalance = new ComputeComplianceBalanceUseCase(complianceRepo);
 const bankSurplus = new BankSurplusUseCase(bankRepo);
 const applyBank = new ApplyBankUseCase(bankRepo);
+const getBankBalance = new GetBankBalanceUseCase(bankRepo);
 const createPool = new CreatePoolUseCase(poolRepo);
 
 const app = createHttpApp({
   getHealth,
+  getBankBalance,
   listRoutes,
   setBaselineRoute,
   computeComplianceBalance,

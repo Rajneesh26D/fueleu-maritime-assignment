@@ -1,4 +1,6 @@
+import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
+import type { GetBankBalanceUseCase } from '../../../core/application/get-bank-balance.use-case.js';
 import type { GetHealthUseCase } from '../../../core/application/get-health.use-case.js';
 import type { ListRoutesUseCase } from '../../../core/application/list-routes.use-case.js';
 import type { SetBaselineRouteUseCase } from '../../../core/application/set-baseline-route.use-case.js';
@@ -11,6 +13,7 @@ import { NotFoundError, ValidationError } from '../../../shared/errors.js';
 
 export interface HttpAppDeps {
   readonly getHealth: GetHealthUseCase;
+  readonly getBankBalance: GetBankBalanceUseCase;
   readonly listRoutes: ListRoutesUseCase;
   readonly setBaselineRoute: SetBaselineRouteUseCase;
   readonly computeComplianceBalance: ComputeComplianceBalanceUseCase;
@@ -21,6 +24,7 @@ export interface HttpAppDeps {
 
 export function createHttpApp(deps: HttpAppDeps): Express {
   const app = express();
+  app.use(cors({ origin: true }));
   app.use(express.json());
 
   app.get('/health', async (_req: Request, res: Response, next: NextFunction) => {
@@ -64,6 +68,20 @@ export function createHttpApp(deps: HttpAppDeps): Express {
       }
       const snapshot = await deps.computeComplianceBalance.execute(shipId, year);
       res.status(200).json(snapshot);
+    }),
+  );
+
+  app.get(
+    '/banking/balance',
+    asyncHandler(async (req, res) => {
+      const shipId = readQueryString(req.query['shipId']);
+      const year = readQueryInt(req.query['year']);
+      if (!shipId || year === undefined) {
+        res.status(400).json({ error: 'Query parameters shipId and year are required' });
+        return;
+      }
+      const balance = await deps.getBankBalance.execute(shipId, year);
+      res.status(200).json({ balance });
     }),
   );
 

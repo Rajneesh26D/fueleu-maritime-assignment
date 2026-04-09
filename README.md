@@ -51,6 +51,7 @@ npm run dev
 - **Compliance:** `GET /compliance/cb?shipId=&year=` — computes CB, persists snapshot on `ship_compliance`
 - **Banking:** `POST /banking/bank`, `POST /banking/apply` — JSON `{ "shipId", "year", "amount" }`
 - **Pooling:** `POST /pools` — JSON `{ "year", "name"?, "members": [{ "shipId", "complianceBalance" }] }`
+- **Bank balance:** `GET /banking/balance?shipId=&year=` — JSON `{ "balance" }` (ledger: BANK minus APPLY)
 
 ```bash
 npm run build
@@ -60,11 +61,17 @@ npm run format
 
 ## Frontend
 
+The **Fuel EU Compliance** dashboard (Tailwind, Lucide, Recharts) calls the backend through `src/adapters/infrastructure/fuel-eu-http.adapter.ts`, which implements the `FuelEuApiPort` in `src/core/ports`. In development, Vite proxies **`/api/*`** to `http://localhost:3000` (see `frontend/vite.config.ts`), so the default client base URL is `/api`.
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+
+Optional: set `VITE_API_BASE_URL` in `frontend/.env` to point at a remote API (see `frontend/.env.example`).
+
+**Tabs:** Routes (table, baseline, filters), Compare (GHG intensity table + chart vs target), Banking (CB + ledger via `GET /banking/balance`), Pooling (feasibility sum + create pool).
 
 ```bash
 npm run build

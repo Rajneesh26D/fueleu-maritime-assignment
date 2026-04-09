@@ -6,6 +6,7 @@ This file records how AI agents were used during development and what was produc
 
 - **Cursor agent (Composer)** — Phase 1: scaffolded `backend/` and `frontend/` (hexagonal layout, TypeScript strict, ESLint, Prettier, Tailwind on the frontend, minimal health API, CI). Commit: `Chore: Initialize hexagonal project structure and environment config`.
 - **Cursor agent (Composer)** — Phase 2: Prisma + PostgreSQL schema and seed, FuelEU domain formulas, compliance/banking/pooling REST API, documentation updates. Commit: `Feat: Implement compliance domain logic and backend API endpoints`.
+- **Cursor agent (Composer)** — Phase 3: React dashboard (four tabs), `FuelEuHttpAdapter`, Lucide + Recharts, Vite `/api` proxy; backend CORS, `GET /banking/balance`, per-route ship seed for Compare. Commit: `Feat: Complete React dashboard with Routes, Compare, Banking, and Pooling tabs`.
 
 ## Prompts & Outputs
 
@@ -31,3 +32,14 @@ Implement Phase 2 on `/backend`: PostgreSQL schema and seed (routes R001–R005,
 - **Application & adapters:** Use cases and Prisma repository implementations; Express wiring and error mapping in `http.server.ts`.  
 - **Pooling algorithm (implemented):** After checking \(\sum_i CB_i \geq 0\), members with \(CB > 0\) are **donors** sorted by **descending** \(CB\) (largest surplus first). Members with \(CB < 0\) are **receivers** sorted by **ascending** \(CB\) (largest deficit first). Transfers are built by iterating receivers in order and drawing from donors in that order until each deficit is covered; remaining donor surplus is reported as `surplusRemainingGco2e`. This matches the requirement to prioritize surplus ships by descending CB and to move surplus onto deficits while keeping the pool feasible.  
 - Commit: `Feat: Implement compliance domain logic and backend API endpoints`.
+
+### Phase 3 — Frontend dashboard (2026-04-09)
+
+**Prompt (summary)**  
+Build the Fuel EU Compliance Dashboard in `/frontend` with Tailwind: infrastructure API clients, four tabs (Routes with filters and Set Baseline; Compare with table and bar/line chart, percent diff vs baseline, compliance vs 89.3368; Banking with CB, Bank/Apply, disable when appropriate; Pooling with sum indicator and create when feasible). Lucide + Recharts, responsive UI. Commit message as specified.
+
+**Output (summary)**  
+- `FuelEuHttpAdapter` + `FuelEuApiPort`, React context provider and `useFuelEuApi`, tabbed dashboard under `src/adapters/ui/dashboard`.  
+- Vite dev proxy `/api` → backend; optional `VITE_API_BASE_URL`.  
+- Backend: `cors`, `GET /banking/balance`, seed rows for `SHIP-R001`–`SHIP-R005` linked to routes for Compare.  
+- Commit: `Feat: Complete React dashboard with Routes, Compare, Banking, and Pooling tabs`.

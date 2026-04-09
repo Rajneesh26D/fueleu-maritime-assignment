@@ -69,5 +69,5 @@ Phase 4: backend unit tests for ComputeComparison / ComputeCB / CreatePool (gree
 
 **Where mistakes or “hallucinations” were risky**  
 - Early assumptions about file paths (e.g. confusing frontend/backend ports) are easy when skimming; verifying paths with the repo tree before editing avoids wrong imports.  
-- Screenshot image paths in README will **break** until real PNGs exist; documenting `docs/screenshots/README.md` makes that explicit rather than implying assets are already present.  
+- README screenshot embeds require the PNGs to exist under `docs/screenshots/` in the committed tree.  
 - Branch naming (`main` vs `master`): the remote may still use `master`; pushing requires matching the actual default branch or an explicit `main` branch creation — always confirm with `git branch -a` before pushing.

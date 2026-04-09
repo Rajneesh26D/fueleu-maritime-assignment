@@ -4,7 +4,8 @@ This file records how AI agents were used during development and what was produc
 
 ## Agents Used
 
-- **Cursor agent (Composer)** — Phase 1 initialization: scaffolded `backend/` and `frontend/` with hexagonal directories, TypeScript strict configuration, ESLint, Prettier, Tailwind on the frontend, a minimal backend health API, root documentation, and a CI workflow. Commit prepared with message: `Chore: Initialize hexagonal project structure and environment config`.
+- **Cursor agent (Composer)** — Phase 1: scaffolded `backend/` and `frontend/` (hexagonal layout, TypeScript strict, ESLint, Prettier, Tailwind on the frontend, minimal health API, CI). Commit: `Chore: Initialize hexagonal project structure and environment config`.
+- **Cursor agent (Composer)** — Phase 2: Prisma + PostgreSQL schema and seed, FuelEU domain formulas, compliance/banking/pooling REST API, documentation updates. Commit: `Feat: Implement compliance domain logic and backend API endpoints`.
 
 ## Prompts & Outputs
 
@@ -18,3 +19,15 @@ Implement Phase 1 only: create the GitHub repo name `fueleu-maritime-assignment`
 - Frontend: Vite + React + TypeScript + Tailwind CSS v4, sample use case and static config adapter, UI under `src/adapters/ui`, ESLint + Prettier.  
 - Root: `.gitignore`, documentation files, GitHub Actions CI for lint/build.  
 - Public repository **Rajneesh26D/fueleu-maritime-assignment** created with GitHub CLI; `origin` updated and initial commit pushed to `master`.
+
+### Phase 2 — Backend core, schema, and API (2026-04-09)
+
+**Prompt (summary)**  
+Implement Phase 2 on `/backend`: PostgreSQL schema and seed (routes R001–R005, R001 baseline; tables `routes`, `ship_compliance`, `bank_entries`, `pools`, `pool_members`); core FuelEU formulas in `core/domain`; Express endpoints (`GET /routes`, `POST /routes/:id/baseline`, `GET /compliance/cb`, banking POSTs, `POST /pools` with greedy pooling and `Sum(CB) ≥ 0`); document pooling in this file; commit with `Feat: Implement compliance domain logic and backend API endpoints`.
+
+**Output (summary)**  
+- **Schema & data:** Prisma schema + migration + `prisma/seed.ts` for five routes and a sample ship compliance row (`SEED-SHIP-1` / 2025). `backend/docker-compose.yml` and `.env.example` for local Postgres.  
+- **Domain:** `fuel-eu.constants.ts`, `compliance-balance.ts` (energy MJ and CB), `pool-allocation.ts` (greedy allocation).  
+- **Application & adapters:** Use cases and Prisma repository implementations; Express wiring and error mapping in `http.server.ts`.  
+- **Pooling algorithm (implemented):** After checking \(\sum_i CB_i \geq 0\), members with \(CB > 0\) are **donors** sorted by **descending** \(CB\) (largest surplus first). Members with \(CB < 0\) are **receivers** sorted by **ascending** \(CB\) (largest deficit first). Transfers are built by iterating receivers in order and drawing from donors in that order until each deficit is covered; remaining donor surplus is reported as `surplusRemainingGco2e`. This matches the requirement to prioritize surplus ships by descending CB and to move surplus onto deficits while keeping the pool feasible.  
+- Commit: `Feat: Implement compliance domain logic and backend API endpoints`.

@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Route {
+  id              String             @id @default(cuid())
+  code            String             @unique
+  name            String
+  description     String?
+  isBaseline      Boolean            @default(false)
+  createdAt       DateTime           @default(now())
+  shipCompliances ShipCompliance[]
+}
+
+model ShipCompliance {
+  id                     String    @id @default(cuid())
+  shipId                 String
+  year                   Int
+  routeId                String?
+  /// Actual intensity (gCO2e / MJ)
+  actualIntensityGco2eMj Float
+  /// Fuel consumption (t)
+  fuelConsumptionTons    Float
+  /// Target intensity for the year (gCO2e / MJ); 2025 default 89.3368
+  targetIntensityGco2eMj Float     @default(89.3368)
+  /// Cached: fuelConsumptionTons * 41_000 MJ/t
+  energyMj               Float?
+  /// Cached compliance balance (gCO2e)
+  complianceBalance      Float?
+  computedAt             DateTime?
+
+  route Route? @relation(fields: [routeId], references: [id])
+
+  @@unique([shipId, year])
+  @@index([shipId])
+  @@index([year])
+}
+
+enum BankEntryKind {
+  BANK
+  APPLY
+}
+
+model BankEntry {
+  id        String        @id @default(cuid())
+  shipId    String
+  year      Int
+  /// Always positive magnitude; direction is encoded in `kind`
+  amount    Float
+  kind      BankEntryKind
+  createdAt DateTime      @default(now())
+
+  @@index([shipId, year])
+}
+
+model Pool {
+  id        String       @id @default(cuid())
+  name      String?
+  year      Int
+  createdAt DateTime     @default(now())
+  members   PoolMember[]
+}
+
+model PoolMember {
+  id                  String @id @default(cuid())
+  poolId              String
+  shipId              String
+  /// Snapshot of compliance balance (gCO2e) at pool creation
+  complianceBalance   Float
+
+  pool Pool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@unique([poolId, shipId])
+  @@index([poolId])
+}

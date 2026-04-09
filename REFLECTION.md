@@ -15,5 +15,16 @@
 
 **Follow-ups for later phases**
 
-- Replace the DB stub with a real PostgreSQL pool and migrations.
 - Centralize frontend dependency injection and add API client ports aligned with backend endpoints.
+
+## Phase 2 — Backend core, schema, and domain logic
+
+**Goals achieved**
+
+- PostgreSQL schema via **Prisma** for `routes`, `ship_compliance`, `bank_entries`, `pools`, and `pool_members`, with an initial SQL migration and seed for routes **R001–R005** (R001 baseline) plus a sample `ship_compliance` row for local testing.
+- **Core formulas** in `src/core/domain`: target intensity constant (2025), energy-in-scope from fuel mass, and compliance balance \(CB = (T - A) \times E\).
+- **HTTP API**: routes listing and baseline selection, compliance CB snapshot, banking with balance checks, and pool creation with greedy surplus-to-deficit allocation (see `AGENT_WORKFLOW.md`).
+
+**Notes**
+
+- Route display names in the seed are placeholders where the assignment PDF was not available in the repository; codes **R001–R005** and baseline semantics match the task.

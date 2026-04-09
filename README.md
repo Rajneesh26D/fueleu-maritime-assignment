@@ -15,7 +15,7 @@ Public GitHub repository: **[github.com/Rajneesh26D/fueleu-maritime-assignment](
 
 | Path | Description |
 |------|-------------|
-| `backend/` | HTTP API, PostgreSQL adapter (stub in Phase 1), composition in `src/infrastructure` |
+| `backend/` | HTTP API, Prisma + PostgreSQL, FuelEU compliance domain, composition in `src/infrastructure` |
 | `frontend/` | React SPA with Vite; UI in `src/adapters/ui` |
 
 Hexagonal folders (both apps):
@@ -30,6 +30,15 @@ Backend additionally uses `src/infrastructure` for process-level wiring (server 
 
 ## Backend
 
+### Database
+
+1. Copy `backend/.env.example` to `backend/.env` and adjust `DATABASE_URL` if needed.
+2. Start PostgreSQL (for example `docker compose -f backend/docker-compose.yml up -d`).
+3. Apply schema: `cd backend && npx prisma migrate deploy`
+4. Seed routes (R001–R005) and sample ship compliance: `npm run prisma:seed`
+
+### Run API
+
 ```bash
 cd backend
 npm install
@@ -37,7 +46,11 @@ npm run dev
 ```
 
 - Default HTTP port: **3000** (override with `PORT`).
-- Health check: `GET /health`
+- **Health:** `GET /health`
+- **Routes:** `GET /routes`, `POST /routes/:id/baseline` (`id` is route `id` or `code`, e.g. `R001`)
+- **Compliance:** `GET /compliance/cb?shipId=&year=` — computes CB, persists snapshot on `ship_compliance`
+- **Banking:** `POST /banking/bank`, `POST /banking/apply` — JSON `{ "shipId", "year", "amount" }`
+- **Pooling:** `POST /pools` — JSON `{ "year", "name"?, "members": [{ "shipId", "complianceBalance" }] }`
 
 ```bash
 npm run build

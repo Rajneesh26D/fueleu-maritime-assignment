@@ -28,6 +28,20 @@ Hexagonal folders (both apps):
 
 Backend additionally uses `src/infrastructure` for process-level wiring (server bootstrap, DB connection factory).
 
+### Core formulas (project spec)
+
+These drive the compliance API and dashboard (see `backend/src/core/domain`):
+
+| Quantity | Formula |
+|----------|---------|
+| Target intensity (2025) | **89.3368** gCO2e/MJ (fixed in code for `year === 2025`) |
+| Energy in scope (MJ) | **fuel consumption (t) × 41,000** MJ/t |
+| Compliance balance (gCO2e) | **(Target − Actual) × Energy in scope** — positive ⇒ surplus, negative ⇒ deficit |
+| Compare % vs baseline route | **((comparison / baseline) − 1) × 100** with GHG intensity actuals (gCO2e/MJ) |
+| Pooling feasibility | **Sum(adjustedCB) ≥ 0** on member snapshots |
+
+Full FuelEU regulatory equations (WtW, penalties, borrowing limits, etc.) are **out of scope** for this codebase; only the simplified project formulas above are implemented.
+
 ## Backend
 
 ### Database

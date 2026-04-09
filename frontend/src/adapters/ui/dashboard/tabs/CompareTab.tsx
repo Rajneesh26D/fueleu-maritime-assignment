@@ -55,6 +55,7 @@ export function CompareTab(): ReactElement {
 
       const built: RowModel[] = snapshots.map(({ route, snapshot }) => {
         const ghg = snapshot?.actualIntensityGco2ePerMj ?? null;
+        /** percentDiff = ((comparison / baseline) - 1) × 100; comparison & baseline = GHG intensity actual (gCO2e/MJ). */
         let percentDiff: number | null = null;
         if (ghg !== null && baselineGhg !== null && baselineGhg > 0) {
           if (route.isBaseline) {
@@ -63,7 +64,10 @@ export function CompareTab(): ReactElement {
             percentDiff = ((ghg / baselineGhg) - 1) * 100;
           }
         }
-        const compliant = ghg !== null ? ghg <= TARGET_INTENSITY_GCO2E_PER_MJ : null;
+        const compliant =
+          ghg !== null && snapshot !== null
+            ? ghg <= snapshot.targetIntensityGco2ePerMj
+            : null;
         return { route, snapshot, ghg, percentDiff, compliant };
       });
 
@@ -79,6 +83,14 @@ export function CompareTab(): ReactElement {
     void load();
   }, [load]);
 
+  /** Target intensity line (gCO2e/MJ) from API snapshot — for 2025 backend enforces 89.3368. */
+  const regulatoryTargetRef = useMemo(() => {
+    const t = rows
+      .map((r) => r.snapshot?.targetIntensityGco2ePerMj)
+      .find((v): v is number => typeof v === 'number' && Number.isFinite(v));
+    return t ?? TARGET_INTENSITY_GCO2E_PER_MJ;
+  }, [rows]);
+
   const chartData = useMemo(
     () =>
       rows
@@ -86,9 +98,9 @@ export function CompareTab(): ReactElement {
         .map((r) => ({
           code: r.route.code,
           intensity: r.ghg as number,
-          baseline: TARGET_INTENSITY_GCO2E_PER_MJ,
+          baseline: regulatoryTargetRef,
         })),
-    [rows],
+    [rows, regulatoryTargetRef],
   );
 
   return (
@@ -97,8 +109,10 @@ export function CompareTab(): ReactElement {
         <div>
           <h2 className="text-xl font-semibold text-white">Compare</h2>
           <p className="mt-1 text-sm text-slate-400">
-            GHG intensity (gCO2e/MJ) vs baseline route. % diff = ((comparison / baseline) − 1) × 100. Target{' '}
-            {TARGET_INTENSITY_GCO2E_PER_MJ}. Each year loads{' '}
+            GHG intensity actual (gCO2e/MJ). <strong>% vs baseline</strong> uses{' '}
+            <code className="text-slate-300">((comparison / baseline) - 1) × 100</code> (route vs baseline route
+            intensities). <strong>vs target</strong> uses API target intensity (2025 = {TARGET_INTENSITY_GCO2E_PER_MJ}{' '}
+            gCO2e/MJ). Each year loads{' '}
             <code className="text-slate-300">GET /compliance/cb?shipId=SHIP-{'{code}'}&amp;year=…</code>; seed data includes{' '}
             <strong className="text-slate-300">2024–2026</strong> for those ships after running{' '}
             <code className="text-slate-300">npm run prisma:seed</code>.
@@ -209,7 +223,7 @@ export function CompareTab(): ReactElement {
                     labelStyle={{ color: '#e2e8f0' }}
                   />
                   <Legend />
-                  <ReferenceLine y={TARGET_INTENSITY_GCO2E_PER_MJ} stroke="#fbbf24" strokeDasharray="4 4" />
+                  <ReferenceLine y={regulatoryTargetRef} stroke="#fbbf24" strokeDasharray="4 4" />
                   <Bar dataKey="intensity" fill="#34d399" name="GHG intensity" barSize={32} radius={[4, 4, 0, 0]} />
                   <Line
                     type="monotone"
@@ -217,7 +231,7 @@ export function CompareTab(): ReactElement {
                     stroke="#fbbf24"
                     strokeWidth={2}
                     dot={false}
-                    name="Target (89.3368)"
+                    name={`Target (${regulatoryTargetRef.toFixed(4)})`}
                   />
                 </ComposedChart>
               </ResponsiveContainer>

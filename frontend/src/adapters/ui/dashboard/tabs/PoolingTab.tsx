@@ -151,9 +151,11 @@ export function PoolingTab(): ReactElement {
       <div>
         <h2 className="text-xl font-semibold text-white">Pooling</h2>
         <p className="mt-1 text-sm text-slate-400">
-          Enter member ships and their compliance balance snapshots. Pool sum must be ≥ 0 for a feasible pool. Your
-          draft (rows, year, name) is saved in this browser tab via <strong className="text-slate-300">sessionStorage</strong>{' '}
-          so it survives refresh and switching dashboard tabs until you close the tab.
+          Enter each member’s compliance balance snapshot (gCO2e). Validation:{' '}
+          <strong className="text-slate-300">Sum(adjustedCB) ≥ 0</strong> (here each row’s balance is the adjusted CB
+          input). Your draft (rows, year, name) is saved in this browser tab via{' '}
+          <strong className="text-slate-300">sessionStorage</strong> so it survives refresh and switching dashboard tabs
+          until you close the tab.
         </p>
       </div>
 
@@ -191,7 +193,7 @@ export function PoolingTab(): ReactElement {
           <AlertTriangle className="h-6 w-6 text-red-400" aria-hidden />
         )}
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-400">Pool sum (Σ CB)</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">Pool sum (Σ adjustedCB)</p>
           <p className={`font-mono text-2xl font-semibold ${sumColor}`}>
             {Number.isFinite(poolSum) ? poolSum.toFixed(2) : '—'}
           </p>

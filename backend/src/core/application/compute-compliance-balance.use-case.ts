@@ -1,4 +1,5 @@
 import { complianceBalanceGco2e, energyInScopeMj } from '../domain/compliance-balance.js';
+import { TARGET_INTENSITY_2025_GCO2E_PER_MJ } from '../domain/fuel-eu.constants.js';
 import type { ComplianceRepositoryPort } from '../ports/compliance.repository.port.js';
 import { NotFoundError } from '../../shared/errors.js';
 
@@ -23,8 +24,11 @@ export class ComputeComplianceBalanceUseCase {
     }
 
     const energyMj = energyInScopeMj(row.fuelConsumptionTons);
+    /** Calendar year 2025: regulatory target is strictly 89.3368 gCO2e/MJ (project formula). */
+    const targetIntensityGco2ePerMj =
+      row.year === 2025 ? TARGET_INTENSITY_2025_GCO2E_PER_MJ : row.targetIntensityGco2eMj;
     const cb = complianceBalanceGco2e(
-      row.targetIntensityGco2eMj,
+      targetIntensityGco2ePerMj,
       row.actualIntensityGco2eMj,
       energyMj,
     );
@@ -38,7 +42,7 @@ export class ComputeComplianceBalanceUseCase {
     return {
       shipId: row.shipId,
       year: row.year,
-      targetIntensityGco2ePerMj: row.targetIntensityGco2eMj,
+      targetIntensityGco2ePerMj,
       actualIntensityGco2ePerMj: row.actualIntensityGco2eMj,
       fuelConsumptionTons: row.fuelConsumptionTons,
       energyMj,

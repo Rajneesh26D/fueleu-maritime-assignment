@@ -1,7 +1,8 @@
 /**
  * Greedy surplus → deficit matching used by POST /pools.
  *
- * Preconditions (enforced by caller): `members.length >= 1`, and `sum(complianceBalance) >= 0`.
+ * Preconditions (enforced by caller): `members.length >= 1`, and **Sum(adjustedCB) ≥ 0**
+ * (here each member’s `complianceBalance` is the adjusted CB snapshot in gCO2e).
  *
  * Algorithm:
  * 1. Partition members into donors (CB > 0) and receivers (CB < 0).
@@ -40,7 +41,7 @@ export function greedyAllocatePool(members: readonly PoolMemberInput[]): GreedyP
 
   const total = members.reduce((s, m) => s + m.complianceBalance, 0);
   if (total < 0) {
-    throw new PoolAllocationError('POOL_INFEASIBLE', 'Sum of compliance balances must be ≥ 0');
+    throw new PoolAllocationError('POOL_INFEASIBLE', 'Sum(adjustedCB) must be ≥ 0');
   }
 
   const donors = members

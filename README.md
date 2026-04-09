@@ -35,7 +35,7 @@ Backend additionally uses `src/infrastructure` for process-level wiring (server 
 1. Copy `backend/.env.example` to `backend/.env` and adjust `DATABASE_URL` if needed.
 2. Start PostgreSQL (for example `docker compose -f backend/docker-compose.yml up -d`).
 3. Apply schema: `cd backend && npx prisma migrate deploy`
-4. Seed routes (R001–R005) and sample ship compliance: `npm run prisma:seed`
+4. Seed routes (R001–R005) and ship compliance for **2024–2026** (`SHIP-R001`…`SHIP-R005`, `SEED-SHIP-1`): `npm run prisma:seed`
 
 ### Run API
 
@@ -72,6 +72,9 @@ npm run dev
 Optional: set `VITE_API_BASE_URL` in `frontend/.env` to point at a remote API (see `frontend/.env.example`).
 
 **Tabs:** Routes (table, baseline, filters), Compare (GHG intensity table + chart vs target), Banking (CB + ledger via `GET /banking/balance`), Pooling (feasibility sum + create pool).
+
+- **Compare year:** The chart loads compliance for `SHIP-{routeCode}` and the selected calendar year. The backend seed creates `ship_compliance` for **2024, 2025, and 2026** for those ships (re-run `npm run prisma:seed` after pulling updates if years are missing).
+- **Pooling draft:** The Pooling form is persisted in **`sessionStorage`** (same browser tab) so edits survive page refresh and switching to other dashboard tabs; closing the tab clears it. This is UI-only (not stored on the server until you click **Create pool**).
 
 ```bash
 npm run build

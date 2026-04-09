@@ -70,46 +70,51 @@ async function main(): Promise<void> {
   const routes = await prisma.route.findMany();
   const idByCode = new Map(routes.map((x) => [x.code, x.id] as const));
 
-  for (const row of ROUTE_SHIPS) {
-    const routeId = idByCode.get(row.code);
-    if (!routeId) {
-      throw new Error(`Missing route ${row.code}`);
+  /** Years exposed in the Compare tab year selector; each needs a `ship_compliance` row per ship. */
+  const PLAN_YEARS = [2024, 2025, 2026] as const;
+
+  for (const planYear of PLAN_YEARS) {
+    for (const row of ROUTE_SHIPS) {
+      const routeId = idByCode.get(row.code);
+      if (!routeId) {
+        throw new Error(`Missing route ${row.code}`);
+      }
+      const shipId = `SHIP-${row.code}`;
+      await prisma.shipCompliance.upsert({
+        where: { shipId_year: { shipId, year: planYear } },
+        update: {
+          actualIntensityGco2eMj: row.actualIntensityGco2eMj,
+          fuelConsumptionTons: row.fuelTons,
+          targetIntensityGco2eMj: 89.3368,
+          routeId,
+        },
+        create: {
+          shipId,
+          year: planYear,
+          routeId,
+          actualIntensityGco2eMj: row.actualIntensityGco2eMj,
+          fuelConsumptionTons: row.fuelTons,
+          targetIntensityGco2eMj: 89.3368,
+        },
+      });
     }
-    const shipId = `SHIP-${row.code}`;
+
     await prisma.shipCompliance.upsert({
-      where: { shipId_year: { shipId, year: 2025 } },
+      where: { shipId_year: { shipId: 'SEED-SHIP-1', year: planYear } },
       update: {
-        actualIntensityGco2eMj: row.actualIntensityGco2eMj,
-        fuelConsumptionTons: row.fuelTons,
+        actualIntensityGco2eMj: 90.0,
+        fuelConsumptionTons: 120.5,
         targetIntensityGco2eMj: 89.3368,
-        routeId,
       },
       create: {
-        shipId,
-        year: 2025,
-        routeId,
-        actualIntensityGco2eMj: row.actualIntensityGco2eMj,
-        fuelConsumptionTons: row.fuelTons,
+        shipId: 'SEED-SHIP-1',
+        year: planYear,
+        actualIntensityGco2eMj: 90.0,
+        fuelConsumptionTons: 120.5,
         targetIntensityGco2eMj: 89.3368,
       },
     });
   }
-
-  await prisma.shipCompliance.upsert({
-    where: { shipId_year: { shipId: 'SEED-SHIP-1', year: 2025 } },
-    update: {
-      actualIntensityGco2eMj: 90.0,
-      fuelConsumptionTons: 120.5,
-      targetIntensityGco2eMj: 89.3368,
-    },
-    create: {
-      shipId: 'SEED-SHIP-1',
-      year: 2025,
-      actualIntensityGco2eMj: 90.0,
-      fuelConsumptionTons: 120.5,
-      targetIntensityGco2eMj: 89.3368,
-    },
-  });
 }
 
 main()

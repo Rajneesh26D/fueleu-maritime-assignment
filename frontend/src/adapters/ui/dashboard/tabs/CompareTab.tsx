@@ -98,7 +98,10 @@ export function CompareTab(): ReactElement {
           <h2 className="text-xl font-semibold text-white">Compare</h2>
           <p className="mt-1 text-sm text-slate-400">
             GHG intensity (gCO2e/MJ) vs baseline route. % diff = ((comparison / baseline) − 1) × 100. Target{' '}
-            {TARGET_INTENSITY_GCO2E_PER_MJ}.
+            {TARGET_INTENSITY_GCO2E_PER_MJ}. Each year loads{' '}
+            <code className="text-slate-300">GET /compliance/cb?shipId=SHIP-{'{code}'}&amp;year=…</code>; seed data includes{' '}
+            <strong className="text-slate-300">2024–2026</strong> for those ships after running{' '}
+            <code className="text-slate-300">npm run prisma:seed</code>.
           </p>
         </div>
         <label className="flex flex-col gap-1 text-xs text-slate-400">
@@ -120,6 +123,15 @@ export function CompareTab(): ReactElement {
       {error && (
         <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           {error}
+        </div>
+      )}
+
+      {!loading && chartData.length === 0 && !error && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          No chart data for <strong>{String(year)}</strong> — missing <code className="text-amber-200">ship_compliance</code>{' '}
+          rows for <code className="text-amber-200">SHIP-R001</code>…<code className="text-amber-200">SHIP-R005</code>. From{' '}
+          <code className="text-amber-200">backend</code>, run <code className="text-amber-200">npm run prisma:seed</code>{' '}
+          (re-seeds 2024–2026).
         </div>
       )}
 

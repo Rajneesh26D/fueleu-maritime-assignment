@@ -1,5 +1,10 @@
-import { useMemo, useRef, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { AlertTriangle, CheckCircle2, Loader2, Plus, Trash2 } from 'lucide-react';
+import {
+  loadPoolingDraft,
+  maxPoolingRowSuffix,
+  savePoolingDraft,
+} from '../../../infrastructure/pooling-draft.storage.js';
 import { useFuelEuApi } from '../../useFuelEuApi.js';
 
 interface MemberRow {
@@ -8,19 +13,50 @@ interface MemberRow {
   complianceBalance: string;
 }
 
+const DEFAULT_MEMBERS: MemberRow[] = [
+  { id: 'm-1', shipId: 'SHIP-R001', complianceBalance: '120' },
+  { id: 'm-2', shipId: 'SHIP-R002', complianceBalance: '-50' },
+];
+
+function initialPoolingState(): { year: number; name: string; members: MemberRow[] } {
+  const draft = loadPoolingDraft();
+  if (draft) {
+    return {
+      year: draft.year,
+      name: draft.name,
+      members: draft.members.map((m) => ({
+        id: m.id,
+        shipId: m.shipId,
+        complianceBalance: m.complianceBalance,
+      })),
+    };
+  }
+  return { year: 2025, name: '', members: DEFAULT_MEMBERS };
+}
+
 export function PoolingTab(): ReactElement {
   const api = useFuelEuApi();
-  const rowId = useRef(2);
+  const [boot] = useState(() => initialPoolingState());
+  const rowId = useRef(Math.max(maxPoolingRowSuffix(boot.members), 2));
   function nextRowId(): string {
     rowId.current += 1;
     return `m-${String(rowId.current)}`;
   }
-  const [year, setYear] = useState(2025);
-  const [name, setName] = useState('');
-  const [members, setMembers] = useState<MemberRow[]>([
-    { id: 'm-1', shipId: 'SHIP-R001', complianceBalance: '120' },
-    { id: 'm-2', shipId: 'SHIP-R002', complianceBalance: '-50' },
-  ]);
+  const [year, setYear] = useState(boot.year);
+  const [name, setName] = useState(boot.name);
+  const [members, setMembers] = useState<MemberRow[]>(boot.members);
+
+  useEffect(() => {
+    savePoolingDraft({
+      year,
+      name,
+      members: members.map((m) => ({
+        id: m.id,
+        shipId: m.shipId,
+        complianceBalance: m.complianceBalance,
+      })),
+    });
+  }, [year, name, members]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
@@ -115,7 +151,9 @@ export function PoolingTab(): ReactElement {
       <div>
         <h2 className="text-xl font-semibold text-white">Pooling</h2>
         <p className="mt-1 text-sm text-slate-400">
-          Enter member ships and their compliance balance snapshots. Pool sum must be ≥ 0 for a feasible pool.
+          Enter member ships and their compliance balance snapshots. Pool sum must be ≥ 0 for a feasible pool. Your
+          draft (rows, year, name) is saved in this browser tab via <strong className="text-slate-300">sessionStorage</strong>{' '}
+          so it survives refresh and switching dashboard tabs until you close the tab.
         </p>
       </div>
 

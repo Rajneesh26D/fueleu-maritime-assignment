@@ -2,6 +2,41 @@
 
 Monorepo for the FuelEU Maritime assignment: a **backend** API (Node.js, TypeScript) and a **web frontend** (React, TypeScript, Tailwind CSS). Both packages follow **hexagonal architecture** (ports and adapters).
 
+## Architecture (hexagonal)
+
+Dependencies point **inward**: the **domain** and **application** (use cases) sit at the center and depend only on abstractions (**ports**). **Adapters** translate between the outside world and those ports: inbound adapters (HTTP server, React UI) drive use cases; outbound adapters (Prisma, HTTP client) implement repository/API ports. **Infrastructure** wires concrete implementations at the process boundary (Express bootstrap, DB connection).
+
+```mermaid
+flowchart TB
+  subgraph drivers["Inbound adapters"]
+    HTTP["Express routes"]
+    UI["React dashboard"]
+  end
+  subgraph app["Application core"]
+    UC["Use cases"]
+    PORTS["Ports (interfaces)"]
+    DOM["Domain (formulas, rules)"]
+  end
+  subgraph driven["Outbound adapters"]
+    DB["Prisma repositories"]
+    HTTPClient["HTTP client (frontend)"]
+  end
+  UI --> UC
+  HTTP --> UC
+  UC --> DOM
+  UC --> PORTS
+  DB --> PORTS
+  HTTPClient --> PORTS
+```
+
+| Layer | Backend | Frontend |
+|-------|---------|----------|
+| Domain | `src/core/domain` — CB, pooling, route comparison | `src/shared` — formulas aligned with API |
+| Application | `src/core/application` — one use case per file | Thin hooks / tab logic |
+| Ports | `src/core/ports` | `src/core/ports` — `FuelEuApiPort` |
+| Adapters | `src/adapters` — HTTP, Prisma | `src/adapters` — UI, HTTP adapter |
+| Composition | `src/infrastructure/server` | `App.tsx` + providers |
+
 ## Repository
 
 Public GitHub repository: **[github.com/Rajneesh26D/fueleu-maritime-assignment](https://github.com/Rajneesh26D/fueleu-maritime-assignment)** (`master` branch).
@@ -59,6 +94,12 @@ npm install
 npm run dev
 ```
 
+Run unit and integration tests (Vitest + Supertest):
+
+```bash
+npm run test
+```
+
 - Default HTTP port: **3000** (override with `PORT`).
 - **Health:** `GET /health`
 - **Routes:** `GET /routes`, `POST /routes/:id/baseline` (`id` is route `id` or `code`, e.g. `R001`)
@@ -83,6 +124,12 @@ npm install
 npm run dev
 ```
 
+Run frontend unit tests (Vitest + Testing Library):
+
+```bash
+npm run test
+```
+
 Optional: set `VITE_API_BASE_URL` in `frontend/.env` to point at a remote API (see `frontend/.env.example`).
 
 **Tabs:** Routes (table, baseline, filters), Compare (GHG intensity table + chart vs target), Banking (CB + ledger via `GET /banking/balance`), Pooling (feasibility sum + create pool).
@@ -96,9 +143,21 @@ npm run lint
 npm run format
 ```
 
+## Screenshots
+
+Example captures (add files under [`docs/screenshots/`](docs/screenshots/) — see [`docs/screenshots/README.md`](docs/screenshots/README.md)):
+
+| | |
+|--|--|
+| Overview | ![Dashboard overview](docs/screenshots/dashboard-overview.png) |
+| Compare | ![Compare tab](docs/screenshots/compare-tab.png) |
+| Pooling | ![Pooling tab](docs/screenshots/pooling-tab.png) |
+
+Until PNGs are committed, those image links may show as broken on GitHub; replace with your own screenshots after `npm run dev`.
+
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs lint and build for `backend` and `frontend` on push and pull requests.
+GitHub Actions (`.github/workflows/ci.yml`) runs lint, test, and build for `backend` and `frontend` on push and pull requests.
 
 ## Documentation
 

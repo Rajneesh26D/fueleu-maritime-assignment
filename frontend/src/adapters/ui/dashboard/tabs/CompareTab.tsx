@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import type { ComplianceSnapshotDto, RouteDto } from '../../../../core/ports/fuel-eu-api.port.js';
 import { shipIdForRouteCode } from '../../../infrastructure/ship-id.js';
+import { percentDiffVsBaselineRoute } from '../../../../shared/comparison-formula.js';
 import { TARGET_INTENSITY_GCO2E_PER_MJ } from '../../../../shared/fuel-eu.js';
 import { useFuelEuApi } from '../../useFuelEuApi.js';
 
@@ -61,7 +62,7 @@ export function CompareTab(): ReactElement {
           if (route.isBaseline) {
             percentDiff = 0;
           } else {
-            percentDiff = ((ghg / baselineGhg) - 1) * 100;
+            percentDiff = percentDiffVsBaselineRoute(ghg, baselineGhg);
           }
         }
         const compliant =

@@ -21,7 +21,7 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', 'eslint.config.js', 'prisma/**'],
+    ignores: ['dist/**', 'node_modules/**', 'eslint.config.js', 'prisma/**', 'vitest.config.ts'],
   },
   prettier,
 );

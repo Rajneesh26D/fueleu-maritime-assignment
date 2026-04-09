@@ -7,6 +7,7 @@ This file records how AI agents were used during development and what was produc
 - **Cursor agent (Composer)** — Phase 1: scaffolded `backend/` and `frontend/` (hexagonal layout, TypeScript strict, ESLint, Prettier, Tailwind on the frontend, minimal health API, CI). Commit: `Chore: Initialize hexagonal project structure and environment config`.
 - **Cursor agent (Composer)** — Phase 2: Prisma + PostgreSQL schema and seed, FuelEU domain formulas, compliance/banking/pooling REST API, documentation updates. Commit: `Feat: Implement compliance domain logic and backend API endpoints`.
 - **Cursor agent (Composer)** — Phase 3: React dashboard (four tabs), `FuelEuHttpAdapter`, Lucide + Recharts, Vite `/api` proxy; backend CORS, `GET /banking/balance`, per-route ship seed for Compare. Commit: `Feat: Complete React dashboard with Routes, Compare, Banking, and Pooling tabs`.
+- **Cursor agent (Composer)** — Phase 4: Vitest unit tests for domain (`compliance-balance`, `route-comparison`, `pool-allocation`, `CreatePoolUseCase`), Supertest HTTP integration tests, frontend formula + `DashboardPage` smoke test; README architecture/setup/screenshots, `REFLECTION.md` essay, CI `npm test`. Commit: `Docs & Test: Finalize unit tests and mandatory documentation`.
 
 ## Prompts & Outputs
 
@@ -43,3 +44,30 @@ Build the Fuel EU Compliance Dashboard in `/frontend` with Tailwind: infrastruct
 - Vite dev proxy `/api` → backend; optional `VITE_API_BASE_URL`.  
 - Backend: `cors`, `GET /banking/balance`, seed rows for `SHIP-R001`–`SHIP-R005` linked to routes for Compare.  
 - Commit: `Feat: Complete React dashboard with Routes, Compare, Banking, and Pooling tabs`.
+
+### Phase 4 — Tests, documentation, polish (2026-04-09)
+
+**Prompt (summary)**  
+Phase 4: backend unit tests for ComputeComparison / ComputeCB / CreatePool (greedy), Supertest integration tests on API routes; frontend unit tests for comparison formula and component rendering; fill `AGENT_WORKFLOW.md` (prompts, corrections, Observations), expand `README.md` (architecture hexagonal, setup/run, UI screenshots), write `REFLECTION.md` (one page on AI-assisted work); verify `npm run test` and `npm run dev` in both packages, TypeScript strict + ESLint; final commit with message `Docs & Test: Finalize unit tests and mandatory documentation` and push to `origin main`.
+
+**Output (summary)**  
+- **Backend:** Vitest tests in `src/core/domain` and `create-pool.use-case.test.ts`; `route-comparison.ts` for shared % formula; `http.integration.test.ts` with mocked `HttpAppDeps` and Supertest; `tsconfig.build.json` excludes tests from `tsc` output; `npm run test`.  
+- **Frontend:** `shared/comparison-formula.ts` + tests; `DashboardPage.test.tsx` with mocked `FuelEuApiPort`; Vitest + Testing Library + jsdom; `npm run test`.  
+- **Docs:** README architecture diagram (Mermaid), setup/run, screenshot table pointing at `docs/screenshots/`; `REFLECTION.md` updated; this file updated including Observations below.  
+- **CI:** workflow runs `npm run test` after lint in both packages.
+
+**Corrections during Phase 4**  
+- Aligned “Compute comparison” with an explicit domain helper (`percentDiffVsBaselineRoute`) in backend and a matching frontend `comparison-formula.ts` so tests and UI share one formula definition.  
+- Split TypeScript emit for production (`tsconfig.build.json`) so test files under `src/` do not need to ship in `dist/`.
+
+## Observations (agent-assisted work)
+
+**Where time was saved**  
+- Boilerplate for Vitest, Supertest, and Testing Library followed standard patterns; mocking `HttpAppDeps` avoided spinning up PostgreSQL for route tests.  
+- Reusing existing hexagonal boundaries made it obvious where to place tests (domain pure functions vs HTTP adapter).  
+- CI copy-paste for `npm test` mirrored existing lint/build steps.
+
+**Where mistakes or “hallucinations” were risky**  
+- Early assumptions about file paths (e.g. confusing frontend/backend ports) are easy when skimming; verifying paths with the repo tree before editing avoids wrong imports.  
+- Screenshot image paths in README will **break** until real PNGs exist; documenting `docs/screenshots/README.md` makes that explicit rather than implying assets are already present.  
+- Branch naming (`main` vs `master`): the remote may still use `master`; pushing requires matching the actual default branch or an explicit `main` branch creation — always confirm with `git branch -a` before pushing.

@@ -1,6 +1,29 @@
 # Fuel EU Maritime — Assignment
 
-Monorepo: **backend** (Node.js, TypeScript, Express, Prisma, PostgreSQL) and **frontend** (React, TypeScript, Vite, Tailwind). Both apps use a **hexagonal** layout (ports and adapters).
+Full-stack **Fuel EU Maritime** exercise: **backend** (Node.js, TypeScript, Express, Prisma, PostgreSQL) and **frontend** (React, TypeScript, Vite, Tailwind). Both apps use **hexagonal** structure (ports and adapters).
+
+## Repository (submission)
+
+**https://github.com/Rajneesh26D/fueleu-maritime-assignment**
+
+Use that link when submitting. On GitHub, the **About** box can summarize the repo, for example:
+
+> Full-stack Fuel EU Maritime assignment — hexagonal architecture, Prisma API, React dashboard (Routes, Compare, Banking, Pooling), tests and CI.
+
+Suggested topics: `typescript`, `react`, `vite`, `nodejs`, `express`, `prisma`, `postgresql`, `tailwindcss`.
+
+## What this project includes
+
+| Area | Delivered |
+|------|-----------|
+| **Architecture** | Hexagonal layout in `backend/` and `frontend/` (domain, application, ports, adapters; backend `infrastructure` for wiring). |
+| **Backend** | REST API per assignment brief: routes (+ optional `?year=` KPI merge), **`GET /routes/comparison`**, compliance (`/compliance/cb`, **`/compliance/adjusted-cb`**), banking (**`/banking/records`**, bank, apply, balance), **`POST /pools`** with greedy allocation, **member `cb_before` / `cb_after`**, transfers. Prisma: routes, ship compliance, bank ledger, pools + members. |
+| **Frontend** | Dashboard: **Routes** (KPI table via `GET /routes?year=…`), **Compare** (`GET /routes/comparison`), **Banking** (CB, adjusted CB, ledger records), **Pooling** (create pool + member outcomes). `FuelEuHttpAdapter` / `FuelEuApiPort`; dev `/api` proxy. |
+| **Formulas** | 2025 target intensity **89.3368** gCO2e/MJ; energy = fuel (t) × **41,000** MJ; CB = (T−A)×E; compare % = ((comparison/baseline)−1)×100; pooling feasibility and greedy pairing per spec. |
+| **Data** | Seed aligns with the brief’s KPI table where defined (e.g. R001–R003 @ 2024, R004–R005 @ 2025); other year×route pairs use defaults. Ships **SHIP-R001…SHIP-R005**, years **2024–2026**. |
+| **Quality** | TypeScript **strict**, ESLint + Prettier; **Vitest** unit tests (domain + use cases + Supertest HTTP mocks); frontend tests (comparison formula + dashboard shell). |
+| **CI** | GitHub Actions: `npm run lint`, `npm run test`, `npm run build` in `backend/` and `frontend/` on push and pull requests. |
+| **Docs** | This README; `REFLECTION.md` (process); `AGENT_WORKFLOW.md` (phased work and tooling notes). |
 
 ## Architecture (hexagonal)
 
@@ -90,11 +113,20 @@ npm run test
 |--|--|
 | Default port | **3000** (`PORT`) |
 | Health | `GET /health` |
-| Routes | `GET /routes`, `POST /routes/:id/baseline` (`id` = route id or code, e.g. `R001`) |
-| Compliance | `GET /compliance/cb?shipId=&year=` |
-| Banking | `POST /banking/bank`, `POST /banking/apply` — body `{ "shipId", "year", "amount" }` |
-| Bank balance | `GET /banking/balance?shipId=&year=` → `{ "balance" }` |
-| Pools | `POST /pools` — body `{ "year", "name"?, "members": [{ "shipId", "complianceBalance" }] }` |
+| Routes | `GET /routes` (optional `?year=` → KPI + compliance columns), `POST /routes/:id/baseline` |
+| Compare | `GET /routes/comparison?year=` → `percentDiff`, `compliant`, intensities |
+| Compliance | `GET /compliance/cb?shipId=&year=` (persists snapshot); `GET /compliance/adjusted-cb?shipId=&year=` (CB after bank ledger) |
+| Banking | `GET /banking/records?shipId=&year=`; `POST /banking/bank`, `POST /banking/apply`; `GET /banking/balance?shipId=&year=` |
+| Pools | `POST /pools` → `members[]` with `cbBefore` / `cbAfter`, `transfers`, `surplusRemainingGco2e` |
+
+**Sample requests** (with API running on port 3000):
+
+```bash
+curl -s "http://localhost:3000/routes/comparison?year=2025"
+curl -s "http://localhost:3000/compliance/adjusted-cb?shipId=SHIP-R001&year=2025"
+curl -s "http://localhost:3000/banking/records?shipId=SHIP-R001&year=2025"
+curl -s "http://localhost:3000/routes?year=2024"
+```
 
 ```bash
 npm run build
@@ -116,7 +148,7 @@ npm run dev
 npm run test
 ```
 
-**Tabs:** Routes · Compare · Banking · Pooling. Compare uses `GET /compliance/cb` per route ship and year (seed covers 2024–2026). Pooling draft state is kept in **sessionStorage** until **Create pool** submits to the server.
+**Tabs:** Routes (metrics when a calendar year is selected) · Compare (`/routes/comparison`) · Banking (CB, adjusted CB, `/banking/records`) · Pooling. Pooling draft uses **sessionStorage** until **Create pool**.
 
 ```bash
 npm run build
@@ -131,3 +163,10 @@ npm run format
 | Overview | ![Dashboard overview](docs/screenshots/dashboard-overview.png) |
 | Compare | ![Compare tab](docs/screenshots/compare-tab.png) |
 | Pooling | ![Pooling tab](docs/screenshots/pooling-tab.png) |
+
+## Further reading
+
+| File | Contents |
+|------|----------|
+| `REFLECTION.md` | Reflection on collaboration and engineering choices |
+| `AGENT_WORKFLOW.md` | Phased delivery log and tooling notes |

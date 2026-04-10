@@ -7,6 +7,8 @@ import { DashboardPage } from './DashboardPage.js';
 function createMockApi(): FuelEuApiPort {
   return {
     listRoutes: vi.fn().mockResolvedValue([]),
+    listRoutesWithMetrics: vi.fn().mockResolvedValue([]),
+    getRoutesComparison: vi.fn().mockResolvedValue({ year: 2025, rows: [] }),
     setBaselineRoute: vi.fn().mockResolvedValue(undefined),
     getComplianceBalance: vi.fn().mockResolvedValue({
       shipId: 'S',
@@ -19,12 +21,20 @@ function createMockApi(): FuelEuApiPort {
       computedAt: new Date().toISOString(),
     }),
     getBankBalance: vi.fn().mockResolvedValue(0),
+    getAdjustedComplianceBalance: vi.fn().mockResolvedValue({
+      shipId: 'S',
+      year: 2025,
+      complianceBalanceGco2e: 0,
+      adjustedComplianceBalanceGco2e: 0,
+    }),
+    getBankingRecords: vi.fn().mockResolvedValue([]),
     postBank: vi.fn().mockResolvedValue(undefined),
     postApply: vi.fn().mockResolvedValue(undefined),
     createPool: vi.fn().mockResolvedValue({
       poolId: 'p',
       transfers: [],
       surplusRemainingGco2e: 0,
+      members: [],
     }),
   };
 }

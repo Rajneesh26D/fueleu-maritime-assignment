@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { BankEntryKind } from '@prisma/client';
-import type { BankRepositoryPort } from '../../../core/ports/bank.repository.port.js';
+import type { BankLedgerRow, BankRepositoryPort } from '../../../core/ports/bank.repository.port.js';
 
 export class PrismaBankRepository implements BankRepositoryPort {
   constructor(private readonly prisma: PrismaClient) {}
@@ -26,5 +26,18 @@ export class PrismaBankRepository implements BankRepositoryPort {
     await this.prisma.bankEntry.create({
       data: { shipId, year, amount, kind: BankEntryKind.APPLY },
     });
+  }
+
+  async findEntries(shipId: string, year: number): Promise<readonly BankLedgerRow[]> {
+    const rows = await this.prisma.bankEntry.findMany({
+      where: { shipId, year },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      kind: r.kind === BankEntryKind.BANK ? ('BANK' as const) : ('APPLY' as const),
+      amount: r.amount,
+      createdAt: r.createdAt,
+    }));
   }
 }

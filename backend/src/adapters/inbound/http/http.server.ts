@@ -8,6 +8,10 @@ import type { ComputeComplianceBalanceUseCase } from '../../../core/application/
 import type { BankSurplusUseCase } from '../../../core/application/bank-surplus.use-case.js';
 import type { ApplyBankUseCase } from '../../../core/application/apply-bank.use-case.js';
 import type { CreatePoolUseCase } from '../../../core/application/create-pool.use-case.js';
+import type { GetAdjustedComplianceBalanceUseCase } from '../../../core/application/get-adjusted-compliance-balance.use-case.js';
+import type { GetRoutesComparisonUseCase } from '../../../core/application/get-routes-comparison.use-case.js';
+import type { ListBankRecordsUseCase } from '../../../core/application/list-bank-records.use-case.js';
+import type { ListRoutesWithMetricsUseCase } from '../../../core/application/list-routes-with-metrics.use-case.js';
 import { PoolAllocationError } from '../../../core/domain/pool-allocation.js';
 import { NotFoundError, ValidationError } from '../../../shared/errors.js';
 
@@ -15,6 +19,10 @@ export interface HttpAppDeps {
   readonly getHealth: GetHealthUseCase;
   readonly getBankBalance: GetBankBalanceUseCase;
   readonly listRoutes: ListRoutesUseCase;
+  readonly listRoutesWithMetrics: ListRoutesWithMetricsUseCase;
+  readonly getRoutesComparison: GetRoutesComparisonUseCase;
+  readonly getAdjustedComplianceBalance: GetAdjustedComplianceBalanceUseCase;
+  readonly listBankRecords: ListBankRecordsUseCase;
   readonly setBaselineRoute: SetBaselineRouteUseCase;
   readonly computeComplianceBalance: ComputeComplianceBalanceUseCase;
   readonly bankSurplus: BankSurplusUseCase;
@@ -38,9 +46,28 @@ export function createHttpApp(deps: HttpAppDeps): Express {
 
   app.get(
     '/routes',
-    asyncHandler(async (_req, res) => {
+    asyncHandler(async (req, res) => {
+      const year = readQueryInt(req.query['year']);
+      if (year !== undefined) {
+        const rows = await deps.listRoutesWithMetrics.execute(year);
+        res.status(200).json(rows);
+        return;
+      }
       const routes = await deps.listRoutes.execute();
       res.status(200).json(routes);
+    }),
+  );
+
+  app.get(
+    '/routes/comparison',
+    asyncHandler(async (req, res) => {
+      const year = readQueryInt(req.query['year']);
+      if (year === undefined) {
+        res.status(400).json({ error: 'Query parameter year is required' });
+        return;
+      }
+      const result = await deps.getRoutesComparison.execute(year);
+      res.status(200).json(result);
     }),
   );
 
@@ -72,6 +99,20 @@ export function createHttpApp(deps: HttpAppDeps): Express {
   );
 
   app.get(
+    '/compliance/adjusted-cb',
+    asyncHandler(async (req, res) => {
+      const shipId = readQueryString(req.query['shipId']);
+      const year = readQueryInt(req.query['year']);
+      if (!shipId || year === undefined) {
+        res.status(400).json({ error: 'Query parameters shipId and year are required' });
+        return;
+      }
+      const result = await deps.getAdjustedComplianceBalance.execute(shipId, year);
+      res.status(200).json(result);
+    }),
+  );
+
+  app.get(
     '/banking/balance',
     asyncHandler(async (req, res) => {
       const shipId = readQueryString(req.query['shipId']);
@@ -82,6 +123,20 @@ export function createHttpApp(deps: HttpAppDeps): Express {
       }
       const balance = await deps.getBankBalance.execute(shipId, year);
       res.status(200).json({ balance });
+    }),
+  );
+
+  app.get(
+    '/banking/records',
+    asyncHandler(async (req, res) => {
+      const shipId = readQueryString(req.query['shipId']);
+      const year = readQueryInt(req.query['year']);
+      if (!shipId || year === undefined) {
+        res.status(400).json({ error: 'Query parameters shipId and year are required' });
+        return;
+      }
+      const records = await deps.listBankRecords.execute(shipId, year);
+      res.status(200).json({ records });
     }),
   );
 
@@ -126,6 +181,7 @@ export function createHttpApp(deps: HttpAppDeps): Express {
         poolId: result.poolId,
         transfers: result.allocation.transfers,
         surplusRemainingGco2e: result.allocation.surplusRemainingGco2e,
+        members: result.memberBalances,
       });
     }),
   );

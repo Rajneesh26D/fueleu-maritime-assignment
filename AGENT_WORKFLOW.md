@@ -1,4 +1,4 @@
-# Agent workflow
+# AI Agent Workflow Log
 
 This file records how AI agents were used during development and what was produced.
 
@@ -8,6 +8,19 @@ This file records how AI agents were used during development and what was produc
 - **Cursor agent (Composer)** — Phase 2: Prisma + PostgreSQL schema and seed, FuelEU domain formulas, compliance/banking/pooling REST API, documentation updates. Commit: `Feat: Implement compliance domain logic and backend API endpoints`.
 - **Cursor agent (Composer)** — Phase 3: React dashboard (four tabs), `FuelEuHttpAdapter`, Lucide + Recharts, Vite `/api` proxy; backend CORS, `GET /banking/balance`, per-route ship seed for Compare. Commit: `Feat: Complete React dashboard with Routes, Compare, Banking, and Pooling tabs`.
 - **Cursor agent (Composer)** — Phase 4: Vitest unit tests for domain (`compliance-balance`, `route-comparison`, `pool-allocation`, `CreatePoolUseCase`), Supertest HTTP integration tests, frontend formula + `DashboardPage` smoke test; README architecture/setup/screenshots, `REFLECTION.md` essay, CI `npm test`. Commit: `Docs & Test: Finalize unit tests and mandatory documentation`.
+- **Cursor agent (Composer)** — Spec alignment: assignment PDF endpoints (`GET /routes/comparison`, `GET /compliance/adjusted-cb`, `GET /banking/records`, `GET /routes?year=`), pool response `cb_before`/`cb_after`, KPI seed data, dashboard wiring, README/AGENT_WORKFLOW updates.
+
+## Validation / Corrections
+
+- After agent-generated edits, changes were checked with **`npm run lint`**, **`npm run test`**, and **`npm run build`** in `backend/` and `frontend/`.
+- The official Fuel EU Maritime full-stack brief was compared to the codebase: missing REST surfaces were added and the UI was pointed at the new routes so behaviour matches the evaluation checklist (hex architecture, four tabs, formulas, tests).
+
+## Best practices followed
+
+- Domain rules live in **`src/core/domain`**; frameworks stay in adapters/infrastructure.
+- Use cases depend on **ports**, not Prisma/Express directly (dependency inversion).
+- **Supertest** integration tests mock `HttpAppDeps` so CI does not require PostgreSQL for route smoke tests.
+- **Incremental commits** preserve a readable history (not a single monolithic dump).
 
 ## Prompts & Outputs
 
@@ -59,6 +72,16 @@ Phase 4: backend unit tests for ComputeComparison / ComputeCB / CreatePool (gree
 **Corrections during Phase 4**  
 - Aligned “Compute comparison” with an explicit domain helper (`percentDiffVsBaselineRoute`) in backend and a matching frontend `comparison-formula.ts` so tests and UI share one formula definition.  
 - Split TypeScript emit for production (`tsconfig.build.json`) so test files under `src/` do not need to ship in `dist/`.
+
+### Phase 5 — Assignment brief alignment (Fuel EU Maritime PDF)
+
+**Prompt (summary)**  
+Re-read the extractable assignment document; implement any missing API routes and UI wiring; keep documentation accurate; commit and push.
+
+**Output (summary)**  
+- **Backend:** `GET /routes/comparison?year=`, `GET /compliance/adjusted-cb?shipId&year=`, `GET /banking/records?shipId&year=`, `GET /routes?year=` (KPI merge); `POST /pools` response includes **`members`** with **`cbBefore`** / **`cbAfter`**; bank repository **`findEntries`**; seed uses KPI intensities where the brief defines them.  
+- **Frontend:** Compare tab uses **`/routes/comparison`**; Routes tab uses **`/routes?year=`** for KPI columns; Banking shows adjusted CB + records table; Pooling shows member before/after from API.  
+- **Docs:** README endpoint table + sample `curl` lines; this log updated.
 
 ## Observations (agent-assisted work)
 

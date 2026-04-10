@@ -129,8 +129,11 @@ export function PoolingTab(): ReactElement {
         })),
       };
       const res = await api.createPool(payload);
+      const memberLine = res.members
+        .map((m) => `${m.shipId}: ${m.cbBefore.toFixed(0)} → ${m.cbAfter.toFixed(0)} gCO2e`)
+        .join('; ');
       setResult(
-        `Pool ${res.poolId} created. Surplus remaining: ${res.surplusRemainingGco2e.toFixed(2)} gCO2e. Transfers: ${String(res.transfers.length)}.`,
+        `Pool ${res.poolId} created. Surplus remaining: ${res.surplusRemainingGco2e.toFixed(2)} gCO2e. Transfers: ${String(res.transfers.length)}. Members: ${memberLine}`,
       );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Pool creation failed');

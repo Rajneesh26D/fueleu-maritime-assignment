@@ -9,6 +9,10 @@ export function BankingTab(): React.ReactElement {
   const [shipId, setShipId] = useState('SEED-SHIP-1');
   const [year, setYear] = useState(2025);
   const [snapshot, setSnapshot] = useState<ComplianceSnapshotDto | null>(null);
+  const [adjusted, setAdjusted] = useState<number | null>(null);
+  const [records, setRecords] = useState<
+    readonly { id: string; kind: 'BANK' | 'APPLY'; amount: number; createdAt: string }[]
+  >([]);
   const [bankBalance, setBankBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -20,15 +24,21 @@ export function BankingTab(): React.ReactElement {
     setLoading(true);
     setError(null);
     try {
-      const [cb, bal] = await Promise.all([
+      const [cb, bal, adj, rec] = await Promise.all([
         api.getComplianceBalance(shipId, year),
         api.getBankBalance(shipId, year),
+        api.getAdjustedComplianceBalance(shipId, year),
+        api.getBankingRecords(shipId, year),
       ]);
       setSnapshot(cb);
       setBankBalance(bal);
+      setAdjusted(adj.adjustedComplianceBalanceGco2e);
+      setRecords(rec);
     } catch (e: unknown) {
       setSnapshot(null);
       setBankBalance(null);
+      setAdjusted(null);
+      setRecords([]);
       setError(e instanceof Error ? e.message : 'Failed to load banking data');
     } finally {
       setLoading(false);
@@ -132,9 +142,10 @@ export function BankingTab(): React.ReactElement {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-          <h3 className="text-sm font-medium text-slate-300">Current compliance balance (CB)</h3>
+          <h3 className="text-sm font-medium text-slate-300">CB (environmental)</h3>
+          <p className="mt-1 text-xs text-slate-500">cb_before — GET /compliance/cb</p>
           {loading ? (
             <Loader2 className="mt-4 h-8 w-8 animate-spin text-slate-500" />
           ) : (
@@ -142,12 +153,22 @@ export function BankingTab(): React.ReactElement {
               {cbVal !== null ? `${cbVal.toLocaleString(undefined, { maximumFractionDigits: 2 })} gCO2e` : '—'}
             </p>
           )}
-          <p className="mt-2 text-xs text-slate-500">
-            Bank action disabled when CB ≤ 0 (no surplus to bank).
-          </p>
+          <p className="mt-2 text-xs text-slate-500">Bank disabled when CB ≤ 0.</p>
+        </div>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+          <h3 className="text-sm font-medium text-slate-300">Adjusted CB</h3>
+          <p className="mt-1 text-xs text-slate-500">cb_after bank ops — GET /compliance/adjusted-cb</p>
+          {loading ? (
+            <Loader2 className="mt-4 h-8 w-8 animate-spin text-slate-500" />
+          ) : (
+            <p className="mt-2 font-mono text-2xl text-amber-200">
+              {adjusted !== null ? `${adjusted.toLocaleString(undefined, { maximumFractionDigits: 2 })} gCO2e` : '—'}
+            </p>
+          )}
         </div>
         <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
           <h3 className="text-sm font-medium text-slate-300">Bank ledger balance</h3>
+          <p className="mt-1 text-xs text-slate-500">available — GET /banking/balance</p>
           {loading ? (
             <Loader2 className="mt-4 h-8 w-8 animate-spin text-slate-500" />
           ) : (
@@ -160,6 +181,30 @@ export function BankingTab(): React.ReactElement {
           <p className="mt-2 text-xs text-slate-500">Apply disabled when ledger ≤ 0.</p>
         </div>
       </div>
+
+      {!loading && records.length > 0 && (
+        <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+          <h3 className="mb-3 text-sm font-medium text-slate-300">Banking records (GET /banking/records)</h3>
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-800 text-slate-400">
+                <th className="py-2 pr-4">Kind</th>
+                <th className="py-2 pr-4 text-right">Amount (gCO2e)</th>
+                <th className="py-2">When</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((r) => (
+                <tr key={r.id} className="border-b border-slate-800/80">
+                  <td className="py-2 text-slate-300">{r.kind}</td>
+                  <td className="py-2 text-right font-mono text-slate-200">{r.amount.toLocaleString()}</td>
+                  <td className="py-2 text-xs text-slate-500">{new Date(r.createdAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/30 p-4">

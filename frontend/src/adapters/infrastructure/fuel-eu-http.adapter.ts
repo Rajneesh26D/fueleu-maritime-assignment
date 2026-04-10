@@ -1,8 +1,12 @@
 import type {
+  AdjustedComplianceBalanceDto,
+  BankRecordDto,
   ComplianceSnapshotDto,
   FuelEuApiPort,
   PoolCreatedDto,
   RouteDto,
+  RouteWithMetricsDto,
+  RoutesComparisonDto,
 } from '../../core/ports/fuel-eu-api.port.js';
 
 function getBaseUrl(): string {
@@ -52,6 +56,18 @@ export class FuelEuHttpAdapter implements FuelEuApiPort {
     return this.parseJson<RouteDto[]>(res);
   }
 
+  async listRoutesWithMetrics(year: number): Promise<RouteWithMetricsDto[]> {
+    const q = new URLSearchParams({ year: String(year) });
+    const res = await fetch(`${this.url('/routes')}?${q.toString()}`);
+    return this.parseJson<RouteWithMetricsDto[]>(res);
+  }
+
+  async getRoutesComparison(year: number): Promise<RoutesComparisonDto> {
+    const q = new URLSearchParams({ year: String(year) });
+    const res = await fetch(`${this.url('/routes/comparison')}?${q.toString()}`);
+    return this.parseJson<RoutesComparisonDto>(res);
+  }
+
   async setBaselineRoute(routeKey: string): Promise<void> {
     const res = await fetch(this.url(`/routes/${encodeURIComponent(routeKey)}/baseline`), {
       method: 'POST',
@@ -65,6 +81,19 @@ export class FuelEuHttpAdapter implements FuelEuApiPort {
     const q = new URLSearchParams({ shipId, year: String(year) });
     const res = await fetch(`${this.url('/compliance/cb')}?${q.toString()}`);
     return this.parseJson<ComplianceSnapshotDto>(res);
+  }
+
+  async getAdjustedComplianceBalance(shipId: string, year: number): Promise<AdjustedComplianceBalanceDto> {
+    const q = new URLSearchParams({ shipId, year: String(year) });
+    const res = await fetch(`${this.url('/compliance/adjusted-cb')}?${q.toString()}`);
+    return this.parseJson<AdjustedComplianceBalanceDto>(res);
+  }
+
+  async getBankingRecords(shipId: string, year: number): Promise<readonly BankRecordDto[]> {
+    const q = new URLSearchParams({ shipId, year: String(year) });
+    const res = await fetch(`${this.url('/banking/records')}?${q.toString()}`);
+    const body = await this.parseJson<{ records: BankRecordDto[] }>(res);
+    return body.records;
   }
 
   async getBankBalance(shipId: string, year: number): Promise<number> {

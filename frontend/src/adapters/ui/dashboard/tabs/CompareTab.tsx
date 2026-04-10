@@ -12,24 +12,14 @@ import {
   ComposedChart,
   Legend,
 } from 'recharts';
-import type { ComplianceSnapshotDto, RouteDto } from '../../../../core/ports/fuel-eu-api.port.js';
-import { shipIdForRouteCode } from '../../../infrastructure/ship-id.js';
-import { percentDiffVsBaselineRoute } from '../../../../shared/comparison-formula.js';
+import type { RouteComparisonRowDto } from '../../../../core/ports/fuel-eu-api.port.js';
 import { TARGET_INTENSITY_GCO2E_PER_MJ } from '../../../../shared/fuel-eu.js';
 import { useFuelEuApi } from '../../useFuelEuApi.js';
-
-interface RowModel {
-  readonly route: RouteDto;
-  readonly snapshot: ComplianceSnapshotDto | null;
-  readonly ghg: number | null;
-  readonly percentDiff: number | null;
-  readonly compliant: boolean | null;
-}
 
 export function CompareTab(): ReactElement {
   const api = useFuelEuApi();
   const [year, setYear] = useState(2025);
-  const [rows, setRows] = useState<RowModel[]>([]);
+  const [rows, setRows] = useState<readonly RouteComparisonRowDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,42 +27,8 @@ export function CompareTab(): ReactElement {
     setLoading(true);
     setError(null);
     try {
-      const list = await api.listRoutes();
-
-      const snapshots = await Promise.all(
-        list.map(async (r) => {
-          const shipId = shipIdForRouteCode(r.code);
-          try {
-            const snap = await api.getComplianceBalance(shipId, year);
-            return { route: r, snapshot: snap };
-          } catch {
-            return { route: r, snapshot: null };
-          }
-        }),
-      );
-
-      const baseline = snapshots.find((s) => s.route.isBaseline);
-      const baselineGhg = baseline?.snapshot?.actualIntensityGco2ePerMj ?? null;
-
-      const built: RowModel[] = snapshots.map(({ route, snapshot }) => {
-        const ghg = snapshot?.actualIntensityGco2ePerMj ?? null;
-        /** percentDiff = ((comparison / baseline) - 1) × 100; comparison & baseline = GHG intensity actual (gCO2e/MJ). */
-        let percentDiff: number | null = null;
-        if (ghg !== null && baselineGhg !== null && baselineGhg > 0) {
-          if (route.isBaseline) {
-            percentDiff = 0;
-          } else {
-            percentDiff = percentDiffVsBaselineRoute(ghg, baselineGhg);
-          }
-        }
-        const compliant =
-          ghg !== null && snapshot !== null
-            ? ghg <= snapshot.targetIntensityGco2ePerMj
-            : null;
-        return { route, snapshot, ghg, percentDiff, compliant };
-      });
-
-      setRows(built);
+      const data = await api.getRoutesComparison(year);
+      setRows(data.rows);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load comparison');
     } finally {
@@ -84,23 +40,18 @@ export function CompareTab(): ReactElement {
     void load();
   }, [load]);
 
-  /** Target intensity line (gCO2e/MJ) from API snapshot — for 2025 backend enforces 89.3368. */
   const regulatoryTargetRef = useMemo(() => {
-    const t = rows
-      .map((r) => r.snapshot?.targetIntensityGco2ePerMj)
-      .find((v): v is number => typeof v === 'number' && Number.isFinite(v));
+    const t = rows.map((r) => r.targetIntensityGco2ePerMj).find((v) => Number.isFinite(v));
     return t ?? TARGET_INTENSITY_GCO2E_PER_MJ;
   }, [rows]);
 
   const chartData = useMemo(
     () =>
-      rows
-        .filter((r) => r.ghg !== null)
-        .map((r) => ({
-          code: r.route.code,
-          intensity: r.ghg as number,
-          baseline: regulatoryTargetRef,
-        })),
+      rows.map((r) => ({
+        code: r.routeCode,
+        intensity: r.ghgIntensityGco2ePerMj,
+        baseline: regulatoryTargetRef,
+      })),
     [rows, regulatoryTargetRef],
   );
 
@@ -110,12 +61,10 @@ export function CompareTab(): ReactElement {
         <div>
           <h2 className="text-xl font-semibold text-white">Compare</h2>
           <p className="mt-1 text-sm text-slate-400">
-            GHG intensity actual (gCO2e/MJ). <strong>% vs baseline</strong> uses{' '}
-            <code className="text-slate-300">((comparison / baseline) - 1) × 100</code> (route vs baseline route
-            intensities). <strong>vs target</strong> uses API target intensity (2025 = {TARGET_INTENSITY_GCO2E_PER_MJ}{' '}
-            gCO2e/MJ). Each year loads{' '}
-            <code className="text-slate-300">GET /compliance/cb?shipId=SHIP-{'{code}'}&amp;year=…</code>; seed data includes{' '}
-            <strong className="text-slate-300">2024–2026</strong> for those ships after running{' '}
+            Data from <code className="text-slate-300">GET /routes/comparison?year=…</code>. GHG intensity actual
+            (gCO2e/MJ). <strong>% vs baseline</strong>:{' '}
+            <code className="text-slate-300">((comparison / baseline) - 1) × 100</code>. <strong>vs target</strong>:{' '}
+            {TARGET_INTENSITY_GCO2E_PER_MJ} gCO2e/MJ (2025 target 89.3368). Seed:{' '}
             <code className="text-slate-300">npm run prisma:seed</code>.
           </p>
         </div>
@@ -143,10 +92,7 @@ export function CompareTab(): ReactElement {
 
       {!loading && chartData.length === 0 && !error && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          No chart data for <strong>{String(year)}</strong> — missing <code className="text-amber-200">ship_compliance</code>{' '}
-          rows for <code className="text-amber-200">SHIP-R001</code>…<code className="text-amber-200">SHIP-R005</code>. From{' '}
-          <code className="text-amber-200">backend</code>, run <code className="text-amber-200">npm run prisma:seed</code>{' '}
-          (re-seeds 2024–2026).
+          No comparison rows for <strong>{String(year)}</strong> — run backend seed.
         </div>
       )}
 
@@ -171,23 +117,21 @@ export function CompareTab(): ReactElement {
                 </tr>
               ) : (
                 rows.map((row) => (
-                  <tr key={row.route.id} className="border-b border-slate-800/80">
+                  <tr key={row.routeId} className="border-b border-slate-800/80">
                     <td className="px-3 py-2">
-                      <span className="font-mono text-emerald-300">{row.route.code}</span>
-                      {row.route.isBaseline && (
+                      <span className="font-mono text-emerald-300">{row.routeCode}</span>
+                      {row.isBaseline && (
                         <span className="ml-2 text-xs text-amber-400/90">baseline</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-slate-200">
-                      {row.ghg !== null ? row.ghg.toFixed(4) : '—'}
+                      {row.ghgIntensityGco2ePerMj.toFixed(4)}
                     </td>
                     <td className="px-3 py-2 text-slate-300">
                       {row.percentDiff !== null ? `${row.percentDiff.toFixed(2)}%` : '—'}
                     </td>
                     <td className="px-3 py-2">
-                      {row.compliant === null ? (
-                        '—'
-                      ) : row.compliant ? (
+                      {row.compliant ? (
                         <span className="inline-flex items-center gap-1 text-emerald-400" title="Compliant with target">
                           <Check className="h-5 w-5" aria-hidden />
                           <span className="sr-only">Compliant</span>
@@ -243,8 +187,7 @@ export function CompareTab(): ReactElement {
 
       {rows.length > 0 && !loading && (
         <p className="text-xs text-slate-500">
-          Data: <code className="text-slate-400">GET /compliance/cb</code> for{' '}
-          <code className="text-slate-400">SHIP-{'{code}'}</code> ships (seeded per route).
+          Data: <code className="text-slate-400">GET /routes/comparison</code> for year {year}.
         </p>
       )}
     </section>

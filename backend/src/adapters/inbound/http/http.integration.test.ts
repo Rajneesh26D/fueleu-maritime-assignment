@@ -6,7 +6,11 @@ import type { ComputeComplianceBalanceUseCase } from '../../../core/application/
 import type { CreatePoolUseCase } from '../../../core/application/create-pool.use-case.js';
 import type { GetBankBalanceUseCase } from '../../../core/application/get-bank-balance.use-case.js';
 import type { GetHealthUseCase } from '../../../core/application/get-health.use-case.js';
+import type { GetAdjustedComplianceBalanceUseCase } from '../../../core/application/get-adjusted-compliance-balance.use-case.js';
+import type { GetRoutesComparisonUseCase } from '../../../core/application/get-routes-comparison.use-case.js';
+import type { ListBankRecordsUseCase } from '../../../core/application/list-bank-records.use-case.js';
 import type { ListRoutesUseCase } from '../../../core/application/list-routes.use-case.js';
+import type { ListRoutesWithMetricsUseCase } from '../../../core/application/list-routes-with-metrics.use-case.js';
 import type { SetBaselineRouteUseCase } from '../../../core/application/set-baseline-route.use-case.js';
 import { createHttpApp } from './http.server.js';
 import type { HttpAppDeps } from './http.server.js';
@@ -35,10 +39,24 @@ function mockDeps(overrides: Partial<HttpAppDeps> = {}): HttpAppDeps {
             name: 'A',
             description: null,
             isBaseline: true,
-            createdAt: new Date().toISOString(),
+            createdAt: new Date(),
           },
         ]),
     } as ListRoutesUseCase,
+    listRoutesWithMetrics: { execute: () => Promise.resolve([]) } as ListRoutesWithMetricsUseCase,
+    getRoutesComparison: {
+      execute: () => Promise.resolve({ year: 2025, rows: [] }),
+    } as GetRoutesComparisonUseCase,
+    getAdjustedComplianceBalance: {
+      execute: () =>
+        Promise.resolve({
+          shipId: 'S',
+          year: 2025,
+          complianceBalanceGco2e: 1,
+          adjustedComplianceBalanceGco2e: 1,
+        }),
+    } as GetAdjustedComplianceBalanceUseCase,
+    listBankRecords: { execute: () => Promise.resolve([]) } as ListBankRecordsUseCase,
     setBaselineRoute: { execute: () => Promise.resolve(undefined) } as SetBaselineRouteUseCase,
     computeComplianceBalance: { execute: () => Promise.resolve(sampleCb) } as ComputeComplianceBalanceUseCase,
     bankSurplus: { execute: () => Promise.resolve(undefined) } as BankSurplusUseCase,
@@ -48,6 +66,7 @@ function mockDeps(overrides: Partial<HttpAppDeps> = {}): HttpAppDeps {
         Promise.resolve({
           poolId: 'pool-1',
           allocation: { transfers: [], surplusRemainingGco2e: 0 },
+          memberBalances: [],
         }),
     } as CreatePoolUseCase,
   };
@@ -100,6 +119,10 @@ describe('HTTP API (integration)', () => {
         transfers: [{ fromShipId: 'A', toShipId: 'B', amountGco2e: 10 }],
         surplusRemainingGco2e: 0,
       },
+      memberBalances: [
+        { shipId: 'A', cbBefore: 10, cbAfter: 0 },
+        { shipId: 'B', cbBefore: -10, cbAfter: 0 },
+      ],
     });
     const app = createHttpApp(
       mockDeps({

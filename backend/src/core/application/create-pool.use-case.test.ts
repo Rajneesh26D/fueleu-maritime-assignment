@@ -19,6 +19,8 @@ describe('CreatePoolUseCase', () => {
     });
     expect(result.poolId).toBe('pool-1');
     expect(result.allocation.surplusRemainingGco2e).toBe(0);
+    expect(result.memberBalances).toHaveLength(2);
+    expect(result.memberBalances[0]?.cbAfter).toBeDefined();
     expect(createPoolWithMembers).toHaveBeenCalledTimes(1);
   });
 });

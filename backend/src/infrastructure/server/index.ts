@@ -10,7 +10,11 @@ import { ApplyBankUseCase } from '../../core/application/apply-bank.use-case.js'
 import { BankSurplusUseCase } from '../../core/application/bank-surplus.use-case.js';
 import { ComputeComplianceBalanceUseCase } from '../../core/application/compute-compliance-balance.use-case.js';
 import { CreatePoolUseCase } from '../../core/application/create-pool.use-case.js';
+import { GetAdjustedComplianceBalanceUseCase } from '../../core/application/get-adjusted-compliance-balance.use-case.js';
+import { GetRoutesComparisonUseCase } from '../../core/application/get-routes-comparison.use-case.js';
 import { GetBankBalanceUseCase } from '../../core/application/get-bank-balance.use-case.js';
+import { ListBankRecordsUseCase } from '../../core/application/list-bank-records.use-case.js';
+import { ListRoutesWithMetricsUseCase } from '../../core/application/list-routes-with-metrics.use-case.js';
 import { GetHealthUseCase } from '../../core/application/get-health.use-case.js';
 import { ListRoutesUseCase } from '../../core/application/list-routes.use-case.js';
 import { SetBaselineRouteUseCase } from '../../core/application/set-baseline-route.use-case.js';
@@ -36,11 +40,19 @@ const bankSurplus = new BankSurplusUseCase(bankRepo);
 const applyBank = new ApplyBankUseCase(bankRepo);
 const getBankBalance = new GetBankBalanceUseCase(bankRepo);
 const createPool = new CreatePoolUseCase(poolRepo);
+const listRoutesWithMetrics = new ListRoutesWithMetricsUseCase(routeRepo, complianceRepo);
+const getRoutesComparison = new GetRoutesComparisonUseCase(routeRepo, complianceRepo);
+const getAdjustedComplianceBalance = new GetAdjustedComplianceBalanceUseCase(complianceRepo, bankRepo);
+const listBankRecords = new ListBankRecordsUseCase(bankRepo);
 
 const app = createHttpApp({
   getHealth,
   getBankBalance,
   listRoutes,
+  listRoutesWithMetrics,
+  getRoutesComparison,
+  getAdjustedComplianceBalance,
+  listBankRecords,
   setBaselineRoute,
   computeComplianceBalance,
   bankSurplus,

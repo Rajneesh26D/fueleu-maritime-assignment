@@ -13,9 +13,16 @@ export interface CreatePoolCommand {
   readonly members: readonly PoolMemberInput[];
 }
 
+export interface PoolMemberBalanceDto {
+  readonly shipId: string;
+  readonly cbBefore: number;
+  readonly cbAfter: number;
+}
+
 export interface CreatePoolResult {
   readonly poolId: string;
   readonly allocation: GreedyPoolAllocationResult;
+  readonly memberBalances: readonly PoolMemberBalanceDto[];
 }
 
 export class CreatePoolUseCase {
@@ -31,7 +38,17 @@ export class CreatePoolUseCase {
 
     const allocation = greedyAllocatePool(cmd.members);
     const { poolId } = await this.pools.createPoolWithMembers(cmd.year, cmd.name, cmd.members);
+    const balances = new Map(cmd.members.map((m) => [m.shipId, m.complianceBalance] as const));
+    for (const t of allocation.transfers) {
+      balances.set(t.fromShipId, (balances.get(t.fromShipId) ?? 0) - t.amountGco2e);
+      balances.set(t.toShipId, (balances.get(t.toShipId) ?? 0) + t.amountGco2e);
+    }
+    const memberBalances: PoolMemberBalanceDto[] = cmd.members.map((m) => ({
+      shipId: m.shipId,
+      cbBefore: m.complianceBalance,
+      cbAfter: balances.get(m.shipId) ?? m.complianceBalance,
+    }));
 
-    return { poolId, allocation };
+    return { poolId, allocation, memberBalances };
   }
 }

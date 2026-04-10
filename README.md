@@ -2,15 +2,6 @@
 
 Full-stack **Fuel EU Maritime** exercise: **backend** (Node.js, TypeScript, Express, Prisma, PostgreSQL) and **frontend** (React, TypeScript, Vite, Tailwind). Both apps use **hexagonal** structure (ports and adapters).
 
-## Repository (submission)
-
-**https://github.com/Rajneesh26D/fueleu-maritime-assignment**
-
-Use that link when submitting. On GitHub, the **About** box can summarize the repo, for example:
-
-> Full-stack Fuel EU Maritime assignment — hexagonal architecture, Prisma API, React dashboard (Routes, Compare, Banking, Pooling), tests and CI.
-
-Suggested topics: `typescript`, `react`, `vite`, `nodejs`, `express`, `prisma`, `postgresql`, `tailwindcss`.
 
 ## What this project includes
 
